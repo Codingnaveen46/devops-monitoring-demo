@@ -9,34 +9,19 @@ pipeline {
             }
         }
 
-        stage('SonarQube Scan') {
-            steps {
-                sh 'sonar-scanner'
-            }
-        }
-
         stage('Build Docker Image') {
             steps {
                 sh 'docker build -t devops-app .'
             }
         }
 
-        stage('Trivy Scan') {
+        stage('Run Container') {
             steps {
-                sh 'trivy image devops-app'
-            }
-        }
-
-        stage('Push Image') {
-            steps {
-                sh 'docker tag devops-app opsnaveen/devops-app:v1'
-                sh 'docker push opsnaveen/devops-app:v1'
-            }
-        }
-
-        stage('Deploy') {
-            steps {
-                sh 'docker run -d -p 3000:3000 opsnaveen/devops-app:v1'
+                sh '''
+                docker stop devops-container || true
+                docker rm devops-container || true
+                docker run -d --name devops-container -p 3000:3000 devops-app
+                '''
             }
         }
     }
