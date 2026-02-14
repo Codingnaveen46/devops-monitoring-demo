@@ -1,6 +1,11 @@
 pipeline {
     agent any
 
+    environment {
+        IMAGE_NAME = "devops-app"
+        CONTAINER_NAME = "devops-container"
+    }
+
     stages {
 
         stage('Checkout') {
@@ -20,19 +25,27 @@ pipeline {
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Quality Gate') {
             steps {
-                sh 'docker build -t devops-app .'
+                timeout(time: 2, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
             }
         }
 
-        stage('Deploy') {
+        stage('Build Docker Image') {
             steps {
-                sh '''
-                docker stop devops-container || true
-                docker rm devops-container || true
-                docker run -d --name devops-container -p 8080:8080 devops-app
-                '''
+                sh "docker build -t ${IMAGE_NAME} ."
+            }
+        }
+
+        stage('Run Container') {
+            steps {
+                sh """
+                docker stop ${CONTAINER_NAME} || true
+                docker rm ${CONTAINER_NAME} || true
+                docker run -d --name ${CONTAINER_NAME} -p 8080:8080 ${IMAGE_NAME}
+                """
             }
         }
     }
