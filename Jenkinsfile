@@ -1,7 +1,25 @@
 pipeline {
     agent any
 
+    tools {
+        sonarQubeScanner 'sonar-scanner'
+    }
+
     stages {
+
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('sonarqube') {
+                    sh 'sonar-scanner'
+                }
+            }
+        }
 
         stage('Build Docker Image') {
             steps {
@@ -9,7 +27,7 @@ pipeline {
             }
         }
 
-        stage('Run Container') {
+        stage('Deploy') {
             steps {
                 sh '''
                 docker stop devops-container || true
