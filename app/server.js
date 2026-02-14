@@ -20,4 +20,4 @@ app.get('/metrics', async (req, res) => {
   res.end(await client.register.metrics());
 });
 
-app.listen(3000);
+app.listen(8080);
